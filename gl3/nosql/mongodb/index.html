@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MongoDB Cheat Sheet (GL3)</title>
+
+  <!-- Fonts (proches “brand style”, faciles à utiliser) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
+<!---
+  <style>
+
+:root{
+  --green-1:#4DB33D;
+  --green-2:#3FA037;
+  --paper:#E8E7D5;
+  --ink:#3F3E42;
+  --muted:#C1BEBC;
+
+  --radius:16px;
+  --shadow: 0 10px 24px rgba(0,0,0,.12);
+
+  --mono: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --serif: "DM Serif Display", Georgia, "Times New Roman", serif;
+}
+
+@page { size: A4 landscape; margin: 10mm; }
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+
+body{
+  margin:0;
+  color: var(--ink);
+  font-family: var(--sans);
+  background:
+    radial-gradient(900px 400px at 10% 0%, rgba(77,179,61,.16), transparent 60%),
+    radial-gradient(900px 500px at 95% 15%, rgba(63,160,55,.12), transparent 60%),
+    var(--paper);
+}
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  padding: 14px 18px 10px;
+  border-bottom: 2px solid rgba(63,62,66,.10);
+}
+
+.brand{ display:flex; gap:12px; align-items:center; }
+.leaf{
+  width:18px; height:18px;
+  border-radius:6px 0 6px 0;
+  background: linear-gradient(135deg, var(--green-1), var(--green-2));
+  box-shadow: 0 6px 16px rgba(77,179,61,.25);
+}
+
+.title{
+  font-family: var(--serif);
+  font-size: 28px;
+  line-height: 1;
+}
+.subtitle{
+  font-size: 12px;
+  color: rgba(63,62,66,.75);
+  margin-top: 4px;
+}
+
+.meta{ display:flex; gap:8px; flex-wrap:wrap; }
+.pill{
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(63,62,66,.18);
+  background: rgba(255,255,255,.45);
+}
+
+.sheet{
+  padding: 14px 18px;
+  column-gap: 14px;
+}
+
+.cols-4{ column-count: 4; }
+.cols-3{ column-count: 3; }
+
+.card{
+  break-inside: avoid;
+  page-break-inside: avoid;
+  background: rgba(255,255,255,.55);
+  border: 1px solid rgba(63,62,66,.14);
+  border-top: 4px solid var(--green-1);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 12px 10px;
+  margin: 0 0 14px 0;
+}
+
+h2{
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+h3{
+  margin: 10px 0 6px;
+  font-size: 12px;
+  color: rgba(63,62,66,.86);
+}
+
+ul{
+  margin: 6px 0 0 18px;
+  padding:0;
+}
+li{
+  margin: 4px 0;
+  font-size: 11.4px;
+  line-height: 1.25;
+}
+
+.tag{
+  display:inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(77,179,61,.14);
+  border: 1px solid rgba(77,179,61,.28);
+  margin: 8px 0 6px;
+}
+
+.tag.danger{
+  background: rgba(193,190,188,.35);
+  border-color: rgba(63,62,66,.25);
+}
+
+.mini-note{
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: linear-gradient(120deg, rgba(77,179,61,.15), rgba(63,160,55,.08));
+  border: 1px solid rgba(77,179,61,.28);
+  font-size: 11px;
+}
+
+pre{
+  margin: 8px 0 0;
+  padding: 10px 10px;
+  border-radius: 12px;
+  background: rgba(63,62,66,.94);
+  color: #fff;
+  overflow: hidden;
+}
+
+code{
+  font-family: var(--mono);
+  font-size: 10.3px;
+  line-height: 1.25;
+}
+
+.subgrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.footer{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding: 8px 18px 12px;
+  font-size: 10.5px;
+  color: rgba(63,62,66,.75);
+  border-top: 2px solid rgba(63,62,66,.10);
+}
+.footer .right{ text-align:right; }
+
+@media print{
+  body{ background: var(--paper); }
+  .card{ box-shadow: none; }
+}
+
+/* --------------------------------------------------------------- */
+
+/* 1) Empêcher les grids internes de forcer une largeur > colonne */
+.subgrid { grid-template-columns: 1fr; }        /* en écran: 1 colonne */
+.subgrid > * { min-width: 0; }                  /* autorise le shrink */
+
+/* 2) Empêcher le code de déborder */
+pre { overflow: auto; max-width: 100%; }
+code { white-space: pre; }
+
+/* 3) En écran, réduire le nombre de colonnes selon la largeur (responsive) */
+@media screen and (max-width: 1400px) { .cols-4 { column-count: 3; } }
+@media screen and (max-width: 1050px) { .cols-4 { column-count: 2; } }
+@media screen and (max-width: 700px)  { .cols-4 { column-count: 1; } }
+
+/* 4) Mais en impression, on revient à 4 colonnes + subgrid en 2 colonnes */
+@media print{
+  .cols-4 { column-count: 4; }
+  .subgrid { grid-template-columns: 1fr 1fr; }
+  pre { overflow: hidden; } /* optionnel, si tu veux éviter les barres */
+}
+
+
+/* logo*/
+
+.logo{
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(77,179,61,.18));
+}
+
+
+/* FORCE le navigateur à garder les couleurs */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Garder le fond et les couleurs des cartes */
+  body {
+    background: var(--paper) !important;
+  }
+
+  .card {
+    background: rgba(255,255,255,.55) !important;
+    border: 1px solid rgba(63,62,66,.14) !important;
+    border-top: 4px solid var(--green-1) !important;
+    box-shadow: var(--shadow) !important; /* si tu veux garder l’ombre */
+  }
+
+  pre {
+    background: rgba(63,62,66,.94) !important;
+    color: #fff !important;
+  }
+
+  .tag {
+    background: rgba(77,179,61,.14) !important;
+    border-color: rgba(77,179,61,.28) !important;
+  }
+
+  /* Évite que le footer/header se “pètent” */
+  .topbar, .footer {
+    border-color: rgba(63,62,66,.10) !important;
+  }
+}
+
+
+  </style>-->
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <!---
+      
+
+      <div class="leaf"></div>
+      <div>
+        <div class="title">MongoDB</div>
+        <div class="subtitle">Cheat Sheet — technique + fondements (GL3)</div>
+      </div>
+
+      -->
+
+  <img class="logo" src="mongodb-icon-1.svg" alt="MongoDB logo" />
+  <div>
+    <div class="title">MongoDB</div>
+    <div class="subtitle">Cheat Sheet — technique + fondements (GL3)</div>
+  </div>
+    </div>
+
+    <div class="meta">
+      <span class="pill">A4 • Landscape</span>
+      <span class="pill">4 colonnes</span>
+      <span class="pill">Print-friendly</span>
+    </div>
+  </header>
+
+  <main class="sheet cols-4">
+    <!-- 0) Fondements -->
+    <section class="card">
+      <h2>0) Fondements</h2>
+
+      <h3>Modèle document</h3>
+      <ul>
+        <li><b>Base → collections → documents → champs</b></li>
+        <li>Document = structure <b>JSON-like</b> (stockée en <b>BSON</b> côté disque)</li>
+        <li><b>Schéma flexible</b> : documents souvent similaires, pas obligatoires</li>
+      </ul>
+
+      <h3>Terminologie SQL vs MongoDB</h3>
+      <ul>
+        <li>Database = <b>database</b></li>
+        <li>Table = <b>collection</b></li>
+        <li>Row = <b>document</b></li>
+        <li>Column = <b>field (champ)</b></li>
+        <li>Join = <b>embedding (imbrication)</b> ou <b>référence</b></li>
+        <li>Primary key = <b>_id</b> (unique)</li>
+      </ul>
+
+      <h3>Champ <code>_id</code></h3>
+      <ul>
+        <li>Champ <b>obligatoire</b> (clé primaire) dans chaque collection</li>
+        <li>Plusieurs types possibles (souvent <code>ObjectId</code>)</li>
+      </ul>
+
+      <h3>Limites & règles</h3>
+      <ul>
+        <li>Taille max d’un document : <b>16MB</b> (au-delà : <b>GridFS</b>)</li>
+        <li>Noms de champs : éviter <code>.</code> et <code>\0</code>, ne pas commencer par <code>$</code></li>
+      </ul>
+    </section>
+
+    <!-- 1) Démarrage rapide -->
+    <section class="card">
+      <h2>1) Démarrage rapide</h2>
+
+      <h3>Connexion</h3>
+      <ul>
+        <li><code>mongosh</code> (shell)</li>
+      </ul>
+
+      <h3>Bases</h3>
+      <pre><code>show dbs
+use mydb
+show collections</code></pre>
+
+      <h3>Inspection rapide</h3>
+      <pre><code>db.users.findOne()
+db.users.find().limit(5)</code></pre>
+    </section>
+
+    <!-- 2) CRUD -->
+    <section class="card">
+      <h2>2) CRUD</h2>
+
+      <h3>2.1 Create (insert)</h3>
+      <div class="mini-note">Si tu ne fournis pas <code>_id</code>, MongoDB le génère.</div>
+      <pre><code>db.users.insertOne({
+  name: "sue",
+  age: 26,
+  status: "A",
+  groups: ["news","sports"]
+})</code></pre>
+
+      <pre><code>db.users.insertMany([
+  { name: "ali", age: 18, status: "A" },
+  { name: "bob", age: 31, status: "B" }
+])</code></pre>
+
+      <h3>2.2 Read (find / findOne)</h3>
+      <pre><code>db.collection.find(&lt;filter&gt;, &lt;projection&gt;)
+// filter: critères (conditions)
+// projection: champs à inclure(1) / exclure(0)</code></pre>
+
+      <div class="subgrid">
+        <div>
+          <div class="tag">Exemples</div>
+          <pre><code>db.inventory.find({})
+db.inventory.find({ status: "D" })
+db.inventory.find({ status: { $in: ["A","D"] } })
+db.inventory.find({ status: "A", qty: { $lt: 30 } })</code></pre>
+        </div>
+        <div>
+          <div class="tag">Projection</div>
+          <pre><code>// Inclure champs
+db.users.find({ age: 18 }, { name: 1, address: 1 })
+
+// Exclure _id
+db.users.find(
+  { status: "A" },
+  { item: 1, status: 1, _id: 0 }
+)</code></pre>
+          <div class="mini-note">
+            Règle : ne pas mélanger inclusion/exclusion (sauf <code>_id</code>).
+          </div>
+        </div>
+      </div>
+
+      <div class="tag">Tri / Limit / Skip</div>
+      <pre><code>db.users.find({ age: { $gt: 18 } }).sort({ age: 1 })
+db.users.find({}).sort({ createdAt: -1 }).limit(10)
+db.users.find({}).skip(20).limit(10)</code></pre>
+
+      <div class="tag">Comptage</div>
+      <pre><code>db.users.countDocuments({ status: "A" })</code></pre>
+    </section>
+
+    <!-- 2.3 Update -->
+    <section class="card">
+      <h2>2.3 Update</h2>
+
+      <div class="tag">Syntaxe générale</div>
+      <pre><code>db.collection.updateOne(filter, update, options)
+db.collection.updateMany(filter, update, options)
+db.collection.replaceOne(filter, replacement, options)</code></pre>
+
+      <div class="tag">$set</div>
+      <pre><code>db.users.updateOne(
+  { name: "sue" },
+  { $set: { age: 27, city: "Tunis" } }
+)</code></pre>
+
+      <div class="tag">$unset</div>
+      <pre><code>db.users.updateOne(
+  { name: "sue" },
+  { $unset: { city: "" } }
+)</code></pre>
+
+      <div class="tag">$inc</div>
+      <pre><code>db.users.updateOne(
+  { name: "sue" },
+  { $inc: { points: 5 } }
+)</code></pre>
+
+      <div class="tag">Arrays</div>
+      <pre><code>// sans doublon
+db.users.updateOne(
+  { name: "sue" },
+  { $addToSet: { groups: "tech" } }
+)
+
+// avec doublon possible
+db.users.updateOne(
+  { name: "sue" },
+  { $push: { groups: "tech" } }
+)
+
+// enlever une valeur
+db.users.updateOne(
+  { name: "sue" },
+  { $pull: { groups: "sports" } }
+)</code></pre>
+
+      <div class="tag">Upsert</div>
+      <pre><code>db.users.updateOne(
+  { email: "a@b.com" },
+  { $set: { name: "Ali", status: "A" } },
+  { upsert: true }
+)</code></pre>
+
+      <div class="mini-note">
+        Par défaut <code>updateOne</code> modifie 1 document, <code>updateMany</code> plusieurs.
+      </div>
+    </section>
+
+    <!-- 2.4 Delete -->
+    <section class="card">
+      <h2>2.4 Delete</h2>
+
+      <div class="tag">Supprimer un doc</div>
+      <pre><code>db.users.deleteOne({ name: "sue" })</code></pre>
+
+      <div class="tag">Supprimer plusieurs</div>
+      <pre><code>db.users.deleteMany({ status: "B" })</code></pre>
+
+      <div class="tag danger">Danger : tout supprimer</div>
+      <pre><code>db.users.deleteMany({})</code></pre>
+    </section>
+
+    <!-- 3) Query Operators -->
+    <section class="card">
+      <h2>3) Query Operators</h2>
+
+      <div class="subgrid">
+        <div>
+          <div class="tag">Comparaison</div>
+          <pre><code>{ age: { $eq: 18 } }
+{ age: { $ne: 18 } }
+{ age: { $gt: 18 } }
+{ age: { $gte: 18 } }
+{ age: { $lt: 18 } }
+{ age: { $lte: 18 } }</code></pre>
+        </div>
+        <div>
+          <div class="tag">Ensembles</div>
+          <pre><code>{ status: { $in:  ["A","D"] } }
+{ status: { $nin: ["A","D"] } }</code></pre>
+        </div>
+      </div>
+
+      <div class="tag">Logique</div>
+      <pre><code>{ $and: [ { status: "A" }, { age: { $gt: 18 } } ] }
+{ $or:  [ { status: "A" }, { status: "D" } ] }
+{ $not: { age: { $gt: 18 } } }</code></pre>
+
+      <div class="mini-note">
+        Note : <code>{ status:"A", age:{ $gt:18 } }</code> équivaut souvent à un AND.
+      </div>
+
+      <div class="subgrid">
+        <div>
+          <div class="tag">Existence / type</div>
+          <pre><code>{ field: { $exists: true } }
+{ field: { $type: "string" } }</code></pre>
+        </div>
+        <div>
+          <div class="tag">Texte (si index texte)</div>
+          <pre><code>{ $text: { $search: "mongodb" } }</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4) Imbrication + arrays -->
+    <section class="card">
+      <h2>4) Imbrication & arrays</h2>
+
+      <div class="tag">Dot notation</div>
+      <pre><code>// doc: { name: { first:"Alan", last:"Turing" } }
+db.people.find({ "name.last": "Turing" })</code></pre>
+
+      <div class="tag">Array contient une valeur</div>
+      <pre><code>db.users.find({ groups: "sports" })</code></pre>
+
+      <div class="tag">$elemMatch</div>
+      <pre><code>db.orders.find({
+  items: { $elemMatch: { qty: { $gt: 5 }, status: "A" } }
+})</code></pre>
+    </section>
+
+    <!-- 5) Aggregation -->
+    <section class="card">
+      <h2>5) Agrégation</h2>
+
+      <div class="mini-note">
+        Une agrégation = pipeline : <code>[{ $stage1 }, { $stage2 }, ...]</code>
+      </div>
+
+      <div class="tag">Exemple : match + group</div>
+      <pre><code>db.orders.aggregate([
+  { $match: { status: "A" } },
+  { $group: { _id: "$cust_id",
+              total: { $sum: "$amount" } } }
+])</code></pre>
+
+      <div class="tag">Stages ultra-utiles</div>
+      <ul>
+        <li><code>$match</code> : filtre (comme WHERE)</li>
+        <li><code>$group</code> : group by + <code>$sum/$avg/$min/$max/$push</code></li>
+        <li><code>$project</code> : calculer/choisir champs</li>
+        <li><code>$sort</code> : trier</li>
+        <li><code>$limit</code> / <code>$skip</code></li>
+        <li><code>$unwind</code> : éclater un tableau</li>
+        <li><code>$lookup</code> : “join” (si références)</li>
+      </ul>
+    </section>
+
+    <!-- 6) Modélisation -->
+    <section class="card">
+      <h2>6) Modélisation</h2>
+
+      <h3>Références (normalisé)</h3>
+      <ul>
+        <li>Un doc contient l’<code>_id</code> d’un autre doc</li>
+        <li>✅ many-to-many, gros volumes, éviter duplication</li>
+        <li>❌ lecture peut nécessiter plusieurs requêtes (ou <code>$lookup</code>)</li>
+      </ul>
+
+      <h3>Imbrication (dénormalisé)</h3>
+      <ul>
+        <li>Sous-documents dans le même document</li>
+        <li>✅ lecture/écriture plus simple et rapide</li>
+        <li>❌ duplication possible, doc peut grossir</li>
+      </ul>
+
+      <h3>Règles pratiques</h3>
+      <ul>
+        <li><b>Imbriquer</b> quand relation <b>contains</b> (one-to-one) ou one-to-many “toujours avec le parent”</li>
+        <li><b>Référencer</b> quand imbrication = duplication sans gain, many-to-many, gros ensembles hiérarchiques</li>
+      </ul>
+    </section>
+
+    <!-- 7) Atomicité -->
+    <section class="card">
+      <h2>7) Atomicité</h2>
+      <ul>
+        <li>Écritures <b>atomiques au niveau d’un document</b></li>
+        <li>Pas de garantie d’atomicité multi-documents/collections en une seule opération</li>
+        <li>L’imbrication aide quand tu veux modifier des données liées “d’un coup”</li>
+      </ul>
+    </section>
+
+    <!-- 8) Index -->
+    <section class="card">
+      <h2>8) Index</h2>
+
+      <div class="tag">Créer / voir</div>
+      <pre><code>db.users.createIndex({ email: 1 }, { unique: true })
+db.users.getIndexes()</code></pre>
+
+      <div class="tag">Index composés</div>
+      <pre><code>db.users.createIndex({ status: 1, createdAt: -1 })</code></pre>
+
+      <div class="mini-note">
+        Index = reads plus rapides, coût en writes + mémoire/disque.
+      </div>
+    </section>
+
+    <!-- 9) Replica set -->
+    <section class="card">
+      <h2>9) Réplication (Replica set)</h2>
+      <ul>
+        <li><b>Replica set</b> = groupe de <code>mongod</code> pour haute dispo</li>
+        <li><b>Primaire</b> : reçoit écritures</li>
+        <li><b>Secondaires</b> : répliquent via <b>oplog</b></li>
+        <li><b>Arbitre</b> : pas de données, vote (utile si nombre pair)</li>
+        <li>Si primaire tombe : <b>élection</b></li>
+      </ul>
+    </section>
+
+    <!-- 10) Sharding -->
+    <section class="card">
+      <h2>10) Sharding</h2>
+
+      <h3>Pourquoi</h3>
+      <ul>
+        <li>Scalabilité : répartir données et charge sur plusieurs serveurs</li>
+      </ul>
+
+      <h3>Composants</h3>
+      <ul>
+        <li><b>Shards</b> : stockent données (souvent en replica sets)</li>
+        <li><b>mongos</b> : routeur de requêtes</li>
+        <li><b>Config servers</b> : métadonnées (chunks → shards)</li>
+      </ul>
+
+      <h3>Shard key</h3>
+      <ul>
+        <li>Partitionnement au niveau collection via une <b>shard key</b></li>
+        <li>Mongo découpe en <b>chunks</b> et distribue</li>
+      </ul>
+
+      <h3>Équilibrage</h3>
+      <ul>
+        <li><b>Splitting</b> : découpe chunks trop gros (sans migrer)</li>
+        <li><b>Balancing</b> : migre chunks pour équilibrer</li>
+      </ul>
+    </section>
+
+    <!-- 11) Pièges -->
+    <section class="card">
+      <h2>11) Pièges classiques</h2>
+      <ul>
+        <li>Faute de frappe sur champ → Mongo renvoie souvent <b>0 résultat</b> (pas d’erreur)</li>
+        <li>Éviter documents qui grossissent sans contrôle (arrays “infinies”)</li>
+        <li>Choisir imbrication vs référence selon lectures/écritures</li>
+      </ul>
+    </section>
+
+    <!-- 12) SQL equivalences -->
+    <section class="card">
+      <h2>12) Mini mémo SQL ↔ Mongo</h2>
+      <ul>
+        <li><code>SELECT * FROM col</code> → <code>db.col.find({})</code></li>
+        <li><code>WHERE x = 5</code> → <code>db.col.find({ x: 5 })</code></li>
+        <li><code>WHERE x IN (...)</code> → <code>{ x: { $in: [...] } }</code></li>
+        <li><code>ORDER BY x DESC</code> → <code>.sort({ x: -1 })</code></li>
+        <li><code>LIMIT 10</code> → <code>.limit(10)</code></li>
+        <li><code>GROUP BY k SUM(v)</code> → <code>aggregate([{ $group: ... }])</code></li>
+      </ul>
+    </section>
+
+    <!-- 13) Templates -->
+    <section class="card">
+      <h2>13) Templates (copier-coller)</h2>
+
+      <div class="tag">Read : filtre + projection + tri</div>
+      <pre><code>db.COL.find(
+  { status: "A", age: { $gte: 18 } },
+  { name: 1, age: 1, status: 1, _id: 0 }
+).sort({ age: 1 }).limit(20)</code></pre>
+
+      <div class="tag">Update safe</div>
+      <pre><code>db.COL.updateOne(
+  { _id: ObjectId("...") },
+  { $set: { field: "new" } }
+)</code></pre>
+
+      <div class="tag">Delete safe</div>
+      <pre><code>db.COL.deleteOne({ _id: ObjectId("...") })</code></pre>
+    </section>
+
+    <!-- 14) Checklist -->
+    <section class="card">
+      <h2>14) Checklist exam / projet</h2>
+      <ul>
+        <li>Expliquer : <b>document / collection / BSON / _id</b></li>
+        <li>Imbrication vs référence + quand choisir</li>
+        <li>CRUD + opérateurs <code>$gt/$in/$set/$unset/$inc</code>…</li>
+        <li>Agrégation : <code>$match</code> + <code>$group</code></li>
+        <li>Atomicité au niveau document</li>
+        <li>Replica set + sharding (<b>mongos/config/chunks</b>)</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Theme colors: #4DB33D #3FA037 #E8E7D5 #3F3E42 #C1BEBC</span>
+    <span class="right">Ctrl+P → Landscape → Background graphics → Save as PDF</span>
+  </footer>
+</body>
+</html>
